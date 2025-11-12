@@ -42,7 +42,7 @@ body {
   flex-direction: column;
 }
 
-.app-header {
+header {
   background-color: var(--background);
   border-bottom: 1px solid var(--border-color);
   padding: 2rem 1rem;
@@ -50,69 +50,41 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-.app-header h1 {
+header h1 {
   font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 0.5rem;
 }
 
-.subtitle {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.app-main {
+main {
   flex: 1;
-  padding: 2rem 1rem;
-}
-
-.container {
   max-width: 800px;
   margin: 0 auto;
+  padding: 2rem 1rem;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-/* Sections */
-.task-form-section,
-.task-list-section {
+/* User Form */
+.user-form {
   background-color: var(--background);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   box-shadow: var(--shadow-md);
-}
-
-.task-form-section h2,
-.task-list-section h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: var(--text-primary);
-}
-
-/* Task Form */
-.task-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.user-form h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.form-group label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.form-group input,
-.form-group textarea {
+.user-form input {
   padding: 0.625rem 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -121,16 +93,10 @@ body {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.form-group input:focus,
-.form-group textarea:focus {
+.user-form input:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-group textarea {
-  resize: vertical;
-  min-height: 80px;
 }
 
 .form-actions {
@@ -139,8 +105,7 @@ body {
   margin-top: 0.5rem;
 }
 
-/* Buttons */
-.btn {
+.form-actions button {
   padding: 0.625rem 1.25rem;
   border: none;
   border-radius: var(--radius-md);
@@ -151,64 +116,59 @@ body {
   font-family: inherit;
 }
 
-.btn:active {
-  transform: scale(0.98);
-}
-
-.btn-primary {
+.form-actions button[type="submit"] {
   background-color: var(--primary-color);
   color: white;
 }
 
-.btn-primary:hover {
+.form-actions button[type="submit"]:hover {
   background-color: var(--primary-hover);
 }
 
-.btn-secondary {
+.form-actions button[type="button"] {
   background-color: var(--text-muted);
   color: white;
 }
 
-.btn-secondary:hover {
+.form-actions button[type="button"]:hover {
   background-color: var(--text-secondary);
 }
 
-.btn-small {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.75rem;
+.form-actions button:active {
+  transform: scale(0.98);
 }
 
-.btn-danger {
-  background-color: var(--danger-color);
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: var(--danger-hover);
-}
-
-/* Task List */
-.task-list {
+/* User List */
+.user-list {
+  background-color: var(--background);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.task-list-empty {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: var(--text-muted);
-}
-
-.task-list-loading {
+.loading,
+.error,
+.empty {
   text-align: center;
   padding: 2rem 1rem;
   color: var(--text-secondary);
 }
 
-/* Task Item */
-.task-item {
+.error {
+  color: var(--danger-color);
+  background-color: #fee2e2;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--danger-color);
+}
+
+/* User Item */
+.user-item {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 1rem;
   padding: 1rem;
   border: 1px solid var(--border-color);
@@ -217,34 +177,17 @@ body {
   transition: box-shadow 0.2s, border-color 0.2s;
 }
 
-.task-item:hover {
+.user-item:hover {
   box-shadow: var(--shadow-sm);
   border-color: var(--primary-color);
 }
 
-.task-item.completed {
-  opacity: 0.7;
-  background-color: var(--background-alt);
-}
-
-.task-checkbox {
-  flex-shrink: 0;
-  margin-top: 0.25rem;
-}
-
-.task-checkbox input[type="checkbox"] {
-  width: 1.25rem;
-  height: 1.25rem;
-  cursor: pointer;
-  accent-color: var(--success-color);
-}
-
-.task-content {
+.user-info {
   flex: 1;
   min-width: 0;
 }
 
-.task-title {
+.user-info h3 {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -252,70 +195,76 @@ body {
   word-wrap: break-word;
 }
 
-.task-item.completed .task-title {
-  text-decoration: line-through;
-  color: var(--text-muted);
-}
-
-.task-description {
+.user-info p {
   font-size: 0.875rem;
   color: var(--text-secondary);
-  margin-bottom: 0.5rem;
   word-wrap: break-word;
 }
 
-.task-item.completed .task-description {
-  color: var(--text-muted);
-}
-
-.task-timestamp {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.task-actions {
+.user-actions {
   flex-shrink: 0;
   display: flex;
   gap: 0.5rem;
-  align-items: flex-start;
 }
 
-/* Error Message */
-.error-message {
-  background-color: #fee2e2;
-  color: #991b1b;
-  padding: 0.75rem 1rem;
+.user-actions button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  border: none;
   border-radius: var(--radius-md);
-  border-left: 4px solid var(--danger-color);
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  font-family: inherit;
+}
+
+.user-actions button:first-child {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.user-actions button:first-child:hover {
+  background-color: var(--primary-hover);
+}
+
+.user-actions button:last-child {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.user-actions button:last-child:hover {
+  background-color: var(--danger-hover);
+}
+
+.user-actions button:active {
+  transform: scale(0.98);
 }
 
 /* Responsive Design */
 @media (max-width: 640px) {
-  .app-header {
+  header {
     padding: 1.5rem 1rem;
   }
 
-  .app-header h1 {
+  header h1 {
     font-size: 1.5rem;
   }
 
-  .container {
+  main {
     gap: 1.5rem;
   }
 
-  .task-form-section,
-  .task-list-section {
+  .user-form,
+  .user-list {
     padding: 1rem;
   }
 
-  .task-item {
+  .user-item {
     flex-direction: column;
-    gap: 0.75rem;
+    align-items: flex-start;
   }
 
-  .task-actions {
+  .user-actions {
     align-self: flex-end;
   }
 
@@ -323,7 +272,7 @@ body {
     flex-direction: column;
   }
 
-  .btn {
+  .form-actions button {
     width: 100%;
   }
 }

@@ -11,7 +11,7 @@ npm run dev             # Start both servers
 ```
 
 **URLs:**
-- Frontend: http://localhost:5173
+- Frontend: http://localhost:5173 (User Directory)
 - Backend: http://localhost:3000
 - API Docs: http://localhost:3000/api
 - Prisma Studio: http://localhost:5555 (run `npm run db:studio`)
@@ -30,30 +30,30 @@ npm run dev             # Start both servers
 
 | Method | Endpoint | Body |
 |--------|----------|------|
-| GET | `/tasks` | - |
-| GET | `/tasks/:id` | - |
-| POST | `/tasks` | `{ title, description? }` |
-| PUT | `/tasks/:id` | `{ title?, description?, completed? }` |
-| DELETE | `/tasks/:id` | - |
+| GET | `/users` | - |
+| GET | `/users/:id` | - |
+| POST | `/users` | `{ name, email }` |
+| PUT | `/users/:id` | `{ name?, email? }` |
+| DELETE | `/users/:id` | - |
 
 ### Quick Test Commands
 
 ```bash
-# Get all tasks
-curl http://localhost:3000/api/tasks
+# Get all users
+curl http://localhost:3000/api/users
 
-# Create a task
-curl -X POST http://localhost:3000/api/tasks \
+# Create a user
+curl -X POST http://localhost:3000/api/users \
   -H "Content-Type: application/json" \
-  -d '{"title":"Test Task","description":"Testing API"}'
+  -d '{"name":"John Doe","email":"john@example.com"}'
 
-# Update task (mark as complete)
-curl -X PUT http://localhost:3000/api/tasks/1 \
+# Update user
+curl -X PUT http://localhost:3000/api/users/1 \
   -H "Content-Type: application/json" \
-  -d '{"completed":true}'
+  -d '{"name":"Jane Doe","email":"jane@example.com"}'
 
-# Delete a task
-curl -X DELETE http://localhost:3000/api/tasks/1
+# Delete a user
+curl -X DELETE http://localhost:3000/api/users/1
 ```
 
 ## 💾 Prisma Commands
@@ -75,8 +75,8 @@ cd server && rm -rf prisma/dev.db && npm run db:push && npm run db:seed
 ## 📂 Key File Locations
 
 ### Backend Files
-- **Routes**: `server/src/routes/tasks.ts`
-- **Controllers**: `server/src/controllers/taskController.ts`
+- **Routes**: `server/src/routes/users.ts`
+- **Controllers**: `server/src/controllers/userController.ts`
 - **DB Schema**: `server/prisma/schema.prisma`
 - **Seed Data**: `server/prisma/seed.ts`
 - **Types**: `server/src/types/index.ts`
@@ -86,19 +86,19 @@ cd server && rm -rf prisma/dev.db && npm run db:push && npm run db:seed
 ### Frontend Files
 - **Main App**: `client/src/App.tsx`
 - **Components**: `client/src/components/`
-- **Hooks**: `client/src/hooks/useTasks.ts`
+- **Hooks**: `client/src/hooks/useUsers.ts`
 - **API Service**: `client/src/services/api.ts`
 - **Types**: `client/src/types/index.ts`
 
 ## 🎤 Interview Talking Points
 
 ### 1-Minute Pitch
-> "This is a production-ready fullstack TypeScript template with React, Express, Prisma, and SQLite. It demonstrates CRUD operations, proper separation of concerns with controllers and services, type-safe API boundaries, and modern React patterns with custom hooks. The entire stack is containerized in a monorepo and ready to run in seconds."
+> "This is a production-ready fullstack TypeScript template with React, Express, Prisma, and SQLite. It demonstrates CRUD operations on a User Directory, proper separation of concerns with controllers and services, type-safe API boundaries, and modern React patterns with custom hooks. The entire stack is containerized in a monorepo and ready to run in seconds."
 
 ### Architecture Highlights
 1. **Type Safety**: TypeScript across frontend, backend, and database
 2. **Separation of Concerns**: Controllers → Routes → Services pattern
-3. **Custom Hooks**: React state management with `useTasks`
+3. **Custom Hooks**: React state management with `useUsers`
 4. **Error Handling**: Centralized error middleware
 5. **Hot Reload**: Instant feedback during development
 6. **Zero Config DB**: SQLite with Prisma ORM
@@ -113,34 +113,34 @@ cd server && rm -rf prisma/dev.db && npm run db:push && npm run db:seed
 
 ### Add New API Endpoint (2 min)
 
-1. Add controller function in `server/src/controllers/taskController.ts`:
+1. Add controller function in `server/src/controllers/userController.ts`:
 ```typescript
-export const getCompletedTasks = async (req: Request, res: Response) => {
-  const tasks = await prisma.task.findMany({ where: { completed: true } });
-  res.json({ success: true, data: tasks });
+export const getUsersByDomain = async (req: Request, res: Response) => {
+  const { domain } = req.params;
+  const users = await prisma.user.findMany({ 
+    where: { email: { endsWith: `@${domain}` } } 
+  });
+  res.json({ success: true, data: users });
 };
 ```
 
-2. Add route in `server/src/routes/tasks.ts`:
+2. Add route in `server/src/routes/users.ts`:
 ```typescript
-router.get('/completed', getCompletedTasks);
+router.get('/domain/:domain', getUsersByDomain);
 ```
 
 ### Add New Component (3 min)
 
-1. Create `client/src/components/TaskStats.tsx`:
+1. Create `client/src/components/UserStats.tsx`:
 ```typescript
 interface Props {
   total: number;
-  completed: number;
 }
 
-export default function TaskStats({ total, completed }: Props) {
+export default function UserStats({ total }: Props) {
   return (
     <div className="stats">
-      <p>Total: {total}</p>
-      <p>Completed: {completed}</p>
-      <p>Remaining: {total - completed}</p>
+      <p>Total Users: {total}</p>
     </div>
   );
 }
@@ -148,18 +148,18 @@ export default function TaskStats({ total, completed }: Props) {
 
 2. Use in `App.tsx`:
 ```typescript
-import TaskStats from './components/TaskStats';
+import UserStats from './components/UserStats';
 // In render:
-<TaskStats total={tasks.length} completed={tasks.filter(t => t.completed).length} />
+<UserStats total={users.length} />
 ```
 
 ### Modify Database Schema (2 min)
 
 1. Edit `server/prisma/schema.prisma`:
 ```prisma
-model Task {
+model User {
   // ... existing fields
-  priority  String?  @default("medium")  // Add new field
+  phone     String?  // Add new field
 }
 ```
 

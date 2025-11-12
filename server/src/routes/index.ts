@@ -1,25 +1,29 @@
-import { Router, Request, Response } from 'express';
-import taskRoutes from './tasks';
+import { Router, Request, Response } from 'express'
+import userRoutes from './users'
 
-const router = Router();
+const router = Router()
 
-/**
- * Health check endpoint
- * @route GET /health
- */
+// Health check
 router.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
+  res.json({ 
+    success: true, 
     message: 'Server is healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
-});
+    timestamp: new Date().toISOString()
+  })
+})
 
-/**
- * Mount task routes
- * All task routes will be available under /api/tasks
- */
-router.use('/tasks', taskRoutes);
+// User routes
+router.use('/users', userRoutes)
 
-export default router;
+// Root endpoint
+router.get('/', (req: Request, res: Response) => {
+  res.json({
+    message: 'Fullstack Interview Template API',
+    endpoints: {
+      health: '/api/health',
+      users: '/api/users'
+    }
+  })
+})
+
+export default router

@@ -1,62 +1,51 @@
 import { useState } from 'react'
-import { useTasks } from './hooks/useTasks'
-import TaskForm from './components/TaskForm'
-import TaskList from './components/TaskList'
-import { CreateTaskDto } from './types'
+import { useUsers } from './hooks/useUsers'
+import { User } from './types'
+import UserForm from './components/UserForm'
+import UserList from './components/UserList'
+import './App.css'
 
 function App() {
-  const { tasks, loading, error, addTask, updateTask, removeTask, toggleTask } = useTasks()
-  const [editingTask, setEditingTask] = useState<{ id: string; title: string; description?: string } | null>(null)
+  const { users, loading, error, addUser, updateUser, removeUser } = useUsers()
+  const [editingUser, setEditingUser] = useState<User | null>(null)
 
-  const handleCreateTask = async (data: CreateTaskDto) => {
-    await addTask(data)
+  const handleAdd = async (data: { name: string; email: string }) => {
+    await addUser(data)
   }
 
-  const handleUpdateTask = async (data: CreateTaskDto) => {
-    if (editingTask) {
-      await updateTask(editingTask.id, data)
-      setEditingTask(null)
+  const handleEdit = async (data: { name: string; email: string }) => {
+    if (editingUser) {
+      await updateUser(editingUser.id, data)
+      setEditingUser(null)
     }
   }
 
-  const handleEditTask = (task: { id: string; title: string; description?: string }) => {
-    setEditingTask(task)
-  }
-
-  const handleCancelEdit = () => {
-    setEditingTask(null)
+  const handleDelete = async (id: number) => {
+    if (confirm('Delete this user?')) {
+      await removeUser(id)
+    }
   }
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>📋 Task Manager</h1>
-        <p className="subtitle">Fullstack Interview Template</p>
+      <header>
+        <h1>👥 User Directory</h1>
       </header>
-
-      <main className="app-main">
-        <div className="container">
-          <section className="task-form-section">
-            <h2>{editingTask ? 'Edit Task' : 'Create New Task'}</h2>
-            <TaskForm
-              onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
-              initialData={editingTask || undefined}
-              onCancel={editingTask ? handleCancelEdit : undefined}
-            />
-          </section>
-
-          <section className="task-list-section">
-            <h2>Tasks</h2>
-            {error && <div className="error-message">{error}</div>}
-            <TaskList
-              tasks={tasks}
-              loading={loading}
-              onToggle={toggleTask}
-              onDelete={removeTask}
-              onEdit={handleEditTask}
-            />
-          </section>
-        </div>
+      
+      <main>
+        <UserForm 
+          onSubmit={editingUser ? handleEdit : handleAdd}
+          initialData={editingUser || undefined}
+          onCancel={editingUser ? () => setEditingUser(null) : undefined}
+        />
+        
+        <UserList 
+          users={users}
+          loading={loading}
+          error={error}
+          onDelete={handleDelete}
+          onEdit={setEditingUser}
+        />
       </main>
     </div>
   )

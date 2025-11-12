@@ -1,5 +1,5 @@
-// Prisma schema file for SQLite database
-// Learn more about Prisma: https://pris.ly/d/prisma-schema
+// Prisma Schema
+// Learn more: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -10,80 +10,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Task {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String?
-  completed   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@map("tasks")
+  @@index([email])
 }
 
-// ==============================================================================
-// COMMON PATTERNS FOR INTERVIEWS (Uncomment to use)
-// ==============================================================================
-
-// --- USER AUTHENTICATION ---
 // model User {
+//   "add" posts     Post[]
+// }
+
+// model Post {
 //   id        Int      @id @default(autoincrement())
-//   email     String   @unique
-//   name      String
-//   password  String   // Store hashed password
-//   tasks     Task[]
+//   title     String
+//   content   String?
+//   userId    Int
+//   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 //   createdAt DateTime @default(now())
 //   updatedAt DateTime @updatedAt
-//   
-//   @@index([email])
-// }
-// 
-// Then add to Task:
-//   userId Int
-//   user   User @relation(fields: [userId], references: [id])
+//
 //   @@index([userId])
-
-// --- ONE-TO-ONE RELATION ---
-// model Profile {
-//   id     Int     @id @default(autoincrement())
-//   bio    String?
-//   avatar String?
-//   userId Int     @unique  // ← Must be unique
-//   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 // }
-
-// --- MANY-TO-MANY ---
-// model Tag {
-//   id    Int    @id @default(autoincrement())
-//   name  String @unique
-//   tasks Task[]
-// }
-// 
-// Then add to Task:
-//   tags Tag[]
-
-// --- SOFT DELETE ---
-// Add to any model:
-//   deletedAt DateTime?
-// 
-// Query with: where: { deletedAt: null }
-
-// --- ENUMS (PostgreSQL/MySQL only, not SQLite) ---
-// enum Status {
-//   TODO
-//   IN_PROGRESS
-//   DONE
-// }
-// 
-// For SQLite use: status String @default("TODO")
-
-// --- JSON METADATA ---
-// Add to any model:
-//   metadata Json?
-// 
-// Store: { settings: { theme: "dark" }, preferences: {...} }
-
-// --- COMPOSITE INDEX ---
-// For queries filtering by multiple fields:
-//   @@index([userId, completed])
-//   @@index([status, priority, createdAt])

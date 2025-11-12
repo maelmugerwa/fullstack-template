@@ -39,8 +39,8 @@ This template is designed to showcase your fullstack development skills quickly 
    ```
    
 2. **Verify All Features Work**
-   - Create, read, update, delete tasks
-   - Check error handling (delete non-existent task)
+   - Create, read, update, delete users
+   - Check error handling (delete non-existent user)
    - Test API directly with curl or Postman
    - Open Prisma Studio
 
@@ -51,8 +51,8 @@ This template is designed to showcase your fullstack development skills quickly 
    - Have this guide open in a tab
 
 4. **Review Key Files**
-   - `server/src/controllers/taskController.ts` - Your best code
-   - `client/src/hooks/useTasks.ts` - Custom hook pattern
+   - `server/src/controllers/userController.ts` - Your best code
+   - `client/src/hooks/useUsers.ts` - Custom hook pattern
    - `server/prisma/schema.prisma` - Database design
 
 ### 30 Minutes Before Interview
@@ -94,12 +94,12 @@ This template is designed to showcase your fullstack development skills quickly 
 
 ### Opening Script (2 minutes)
 
-> "I've prepared a fullstack TypeScript application that demonstrates production-ready patterns. It's a task manager with a React frontend, Express API, and Prisma ORM connecting to SQLite. Let me show you how it works, then we can dive into any area you'd like to explore."
+> "I've prepared a fullstack TypeScript application that demonstrates production-ready patterns. It's a user directory with a React frontend, Express API, and Prisma ORM connecting to SQLite. Let me show you how it works, then we can dive into any area you'd like to explore."
 
 **Then demonstrate:**
-1. Create a task (shows POST)
-2. Toggle completion (shows PUT)
-3. Delete a task (shows DELETE)
+1. Create a user (shows POST)
+2. Edit user details (shows PUT)
+3. Delete a user (shows DELETE)
 4. Show API response in Network tab
 
 **Transition:**
@@ -142,7 +142,7 @@ server/src/
 ```
 client/src/
 ├── components/    # Reusable UI pieces
-├── hooks/         # Shared logic (useTasks)
+├── hooks/         # Shared logic (useUsers)
 ├── services/      # API communication layer
 └── types/         # TypeScript interfaces
 ```
@@ -154,22 +154,22 @@ client/src/
 
 **Controller Pattern**
 ```typescript
-export const getAllTasks = async (req: Request, res: Response) => {
-  const tasks = await prisma.task.findMany();
-  res.json({ success: true, data: tasks });
+export const getAllUsers = async (req: Request, res: Response) => {
+  const users = await prisma.user.findMany();
+  res.json({ success: true, data: users });
 };
 ```
 > "Controllers are thin - they orchestrate. In a larger app, I'd extract a service layer."
 
 **Custom Hook Pattern**
 ```typescript
-export function useTasks() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+export function useUsers() {
+  const [users, setUsers] = useState<User[]>([]);
   // ... logic
-  return { tasks, addTask, updateTask, removeTask, toggleTask };
+  return { users, addUser, updateUser, removeUser };
 }
 ```
-> "Encapsulates all task-related state and operations. Components just consume the interface."
+> "Encapsulates all user-related state and operations. Components just consume the interface."
 
 **Repository Pattern (via Prisma)**
 > "Prisma acts as a repository. All database access goes through type-safe methods. Easy to mock for testing."
@@ -181,22 +181,18 @@ export function useTasks() {
 **Approach (5-10 minutes):**
 
 1. **Explain the Strategy**
-   > "I'd add JWT authentication. Create a User model, implement register/login endpoints, add auth middleware to protect routes."
+   > "I'd add JWT authentication. Keep the existing User model, add password field, implement register/login endpoints, add auth middleware to protect routes."
 
 2. **Show Quick Implementation**
    ```typescript
    // In schema.prisma
    model User {
-     id       Int    @id @default(autoincrement())
-     email    String @unique
-     password String
-     tasks    Task[]
-   }
-   
-   model Task {
-     // ... existing fields
-     userId   Int
-     user     User   @relation(fields: [userId], references: [id])
+     id        Int      @id @default(autoincrement())
+     name      String
+     email     String   @unique
+     password  String   // Add hashed password
+     createdAt DateTime @default(now())
+     updatedAt DateTime @updatedAt
    }
    ```
 
@@ -213,131 +209,140 @@ export function useTasks() {
 
 4. **Show Protected Route**
    ```typescript
-   router.get('/', authenticate, getAllTasks);
+   router.get('/', authenticate, getAllUsers);
    ```
 
-### Scenario 2: "Add Filtering and Pagination"
+### Scenario 2: "Add User Roles and Permissions"
 
 **Approach (5-10 minutes):**
 
 1. **Show API Design**
    ```typescript
-   // GET /api/tasks?completed=true&page=1&limit=10
-   export const getAllTasks = async (req: Request, res: Response) => {
-     const { completed, page = 1, limit = 10 } = req.query;
+   // In schema.prisma
+   model User {
+     // ... existing fields
+     role      String   @default("user") // "admin" | "user"
+   }
+   
+   // Controller with role check
+   export const getAllUsers = async (req: Request, res: Response) => {
+     const { role } = req.user; // From auth middleware
      
-     const tasks = await prisma.task.findMany({
-       where: completed !== undefined ? { completed: completed === 'true' } : {},
-       skip: (Number(page) - 1) * Number(limit),
-       take: Number(limit),
+     if (role !== 'admin') {
+       return res.status(403).json({ 
+         success: false, 
+         error: 'Admin access required' 
+       });
+     }
+     
+     const users = await prisma.user.findMany({
+       orderBy: { createdAt: 'desc' }
      });
      
-     const total = await prisma.task.count({
-       where: completed !== undefined ? { completed: completed === 'true' } : {},
-     });
-     
-     res.json({ 
-       success: true, 
-       data: tasks,
-       pagination: { page: Number(page), limit: Number(limit), total }
-     });
+     res.json({ success: true, data: users });
    };
    ```
 
 2. **Frontend Integration**
    ```typescript
-   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
-   const filteredTasks = tasks.filter(task => {
-     if (filter === 'active') return !task.completed;
-     if (filter === 'completed') return task.completed;
-     return true;
-   });
+   const [currentUser, setCurrentUser] = useState<User | null>(null);
+   const canEdit = currentUser?.role === 'admin';
+   
+   return (
+     <>
+       {canEdit && <button onClick={handleEdit}>Edit</button>}
+     </>
+   );
    ```
 
-### Scenario 3: "Add Form Validation"
+### Scenario 3: "Add User Profile Page"
 
 **Approach (3-5 minutes):**
 
-1. **Show Backend Validation**
+1. **Show Backend Route**
    ```typescript
-   export const createTask = async (req: Request, res: Response) => {
-     const { title, description } = req.body;
+   export const getUserProfile = async (req: Request, res: Response) => {
+     const { id } = req.params;
      
-     // Validation
-     if (!title || title.trim().length === 0) {
-       return res.status(400).json({ 
+     const user = await prisma.user.findUnique({
+       where: { id: Number(id) },
+       select: {
+         id: true,
+         name: true,
+         email: true,
+         createdAt: true,
+         // Don't return sensitive fields
+       }
+     });
+     
+     if (!user) {
+       return res.status(404).json({ 
          success: false, 
-         error: 'Title is required' 
+         error: 'User not found' 
        });
      }
      
-     if (title.length > 200) {
-       return res.status(400).json({ 
-         success: false, 
-         error: 'Title must be less than 200 characters' 
-       });
-     }
-     
-     // ... create task
+     res.json({ success: true, data: user });
    };
    ```
 
-2. **Discuss Frontend Validation**
-   > "For production, I'd use a library like Zod or Yup for schema validation on both frontend and backend. Share the schema for consistency."
+2. **Discuss Frontend Component**
+   > "I'd create a UserProfile component that fetches user data by ID and displays it in a card layout with avatar, bio, and activity stats."
 
-### Scenario 4: "Add Real-Time Updates"
+### Scenario 4: "Add User Search and Filtering"
 
 **Quick Discussion (2-3 minutes):**
 
-> "I'd implement WebSockets using Socket.io:
-> 1. Add socket.io to both frontend and backend
-> 2. Emit events on CRUD operations: `socket.emit('task:created', task)`
-> 3. Frontend subscribes: `socket.on('task:created', (task) => setTasks(prev => [...prev, task]))`
-> 4. Alternative: Server-Sent Events for simpler one-way updates"
+> "I'd implement search with query parameters:
+> 1. Backend: `GET /api/users?search=john&limit=10`
+> 2. Use Prisma's where clause with contains/startsWith
+> 3. Frontend: Add search input with debouncing
+> 4. Update useUsers hook to accept search params
+> 5. Alternative: Client-side filtering for smaller datasets"
 
 ## Extension Ideas by Time
 
 ### 5-Minute Extensions
 
-- Add task search/filter by title
-- Add task priority field (low/medium/high)
-- Add task due date field
+- Add user search/filter by name or email
+- Add phone number field to User model
+- Add user status field (active/inactive)
 - Add confirmation dialogs for delete
 - Add loading spinners
 - Add toast notifications
 
 ### 10-Minute Extensions
 
-- Add user authentication (basic JWT)
-- Add pagination for task list
-- Add task categories/tags
-- Add sorting options (date, title, priority)
+- Add user roles (admin/user)
+- Add pagination for user list
+- Add user profile with bio field
+- Add sorting options (name, email, date joined)
 - Add keyboard shortcuts
 - Add dark mode toggle
 
 ### 20-Minute Extensions
 
 - Add full authentication system with registration
-- Add task assignment to users
-- Add file attachments to tasks
-- Add commenting on tasks
-- Add task history/audit log
-- Add email notifications
+- Add user groups/teams
+- Add user avatar upload
+- Add activity tracking for users
+- Add user preferences/settings
+- Add email verification
 
 ### 30+ Minute Extensions
 
 - Add role-based access control
-- Add team/workspace functionality
-- Add real-time collaboration (WebSockets)
-- Add task dependencies
-- Add recurring tasks
+- Add organization/workspace functionality
+- Add real-time user status (WebSockets)
+- Add user posts or content (one-to-many relation)
+- Add user social connections
 - Add analytics dashboard
 
 ## Talking Points & Stories
 
 ### Why I Built This
 
-> "I created this template to have a solid foundation for technical interviews. It demonstrates modern fullstack practices while being simple enough to explain quickly and extend in any direction."
+> "I created this template to have a solid foundation for technical interviews. It demonstrates modern fullstack practices with a simple User Directory - minimal complexity but extensible. Starting with just name and email makes it easy to discuss adding fields based on requirements."
 
 ### Tech Stack Evolution
 
@@ -415,7 +420,7 @@ export function useTasks() {
 **Your Answer:**
 > "Current state is demo-ready but needs hardening:
 > 1. Add authentication & authorization
-> 2. Input validation & sanitization
+> 2. Input validation & sanitization (especially email format)
 > 3. SQL injection protection (Prisma helps here)
 > 4. XSS prevention
 > 5. CSRF tokens
@@ -423,7 +428,8 @@ export function useTasks() {
 > 7. HTTPS in production
 > 8. Environment secrets management
 > 9. Audit logging
-> 10. Dependency vulnerability scanning"
+> 10. Dependency vulnerability scanning
+> 11. Email verification to prevent fake accounts"
 
 ## Demo Script
 
@@ -433,30 +439,29 @@ export function useTasks() {
 > "I've built a fullstack TypeScript template that demonstrates modern web development practices. Let me show you."
 
 **2. Live Demo (2 min)**
-- Create task: "Deploy to production"
+- Create user: "John Doe" with "john@example.com"
 - Show in UI
 - Open Network tab, show API response
-- Edit task
-- Mark as complete
-- Delete task
+- Edit user name to "Jane Doe"
+- Delete user
 
 **3. Backend Walkthrough (3 min)**
-- Show `server/src/routes/tasks.ts` - "Clean REST API"
-- Show `server/src/controllers/taskController.ts` - "Business logic"
+- Show `server/src/routes/users.ts` - "Clean REST API"
+- Show `server/src/controllers/userController.ts` - "Business logic"
 - Show `server/prisma/schema.prisma` - "Type-safe schema"
 - Mention middleware for logging and error handling
 
 **4. Frontend Walkthrough (2 min)**
-- Show `client/src/hooks/useTasks.ts` - "Custom hook pattern"
-- Show `client/src/components/TaskList.tsx` - "Component composition"
+- Show `client/src/hooks/useUsers.ts` - "Custom hook pattern"
+- Show `client/src/components/UserList.tsx` - "Component composition"
 - Show `client/src/services/api.ts` - "API abstraction"
 
 **5. Extension Capability (2 min)**
 > "What feature would you like me to add? I can implement:
 > - Authentication
+> - User roles
 > - Search/filtering
-> - Validation
-> - Real-time updates
+> - Profile pages
 > - Or something else?"
 
 ## Red Flags to Avoid
@@ -507,12 +512,15 @@ NODE_ENV=development
 
 **Common Prisma Model Addition:**
 ```prisma
-model User {
-  id       Int      @id @default(autoincrement())
-  email    String   @unique
-  name     String?
-  tasks    Task[]
+model UserProfile {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  bio       String?
+  phone     String?
+  avatar    String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 ```
 
@@ -547,7 +555,7 @@ git add . && git commit -m "Add feature" && git push
 Before starting any interview:
 
 - [ ] Application runs without errors
-- [ ] Database has sample data
+- [ ] Database has sample data (3 users)
 - [ ] All features work (create, read, update, delete)
 - [ ] You can explain every file's purpose
 - [ ] You've practiced the demo script
@@ -557,6 +565,6 @@ Before starting any interview:
 
 ---
 
-**🎯 Remember:** The goal isn't to have a perfect application, but to demonstrate your thinking process, problem-solving ability, and understanding of fullstack development. Show confidence, communicate clearly, and enjoy the conversation!
+**🎯 Remember:** The goal isn't to have a perfect application, but to demonstrate your thinking process, problem-solving ability, and understanding of fullstack development. The simplified User Directory with just name and email makes it easy to extend based on requirements. Show confidence, communicate clearly, and enjoy the conversation!
 
 **Good luck! 🚀**
