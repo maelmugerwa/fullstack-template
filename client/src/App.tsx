@@ -1,51 +1,59 @@
-import { useState } from 'react'
-import { useUsers } from './hooks/useUsers'
-import { User } from './types'
-import UserForm from './components/UserForm'
-import UserList from './components/UserList'
+import { useAuth } from './contexts/AuthContext'
+import { usePolls } from './hooks/usePolls'
+import Auth from './components/Auth'
+import GuestConvert from './components/GuestConvert'
+import PollForm from './components/PollForm'
+import PollDisplay from './components/PollDisplay'
 import './App.css'
 
 function App() {
-  const { users, loading, error, addUser, updateUser, removeUser } = useUsers()
-  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const { user, loading: authLoading, logout } = useAuth()
+  const { polls, loading: pollsLoading, createPoll, vote, deletePoll } = usePolls()
 
-  const handleAdd = async (data: { name: string; email: string }) => {
-    await addUser(data)
+  if (authLoading) {
+    return (
+      <div className="app">
+        <div className="loading">Loading...</div>
+      </div>
+    )
   }
 
-  const handleEdit = async (data: { name: string; email: string }) => {
-    if (editingUser) {
-      await updateUser(editingUser.id, data)
-      setEditingUser(null)
-    }
-  }
-
-  const handleDelete = async (id: number) => {
-    if (confirm('Delete this user?')) {
-      await removeUser(id)
-    }
+  if (!user) {
+    return <Auth />
   }
 
   return (
     <div className="app">
       <header>
-        <h1>👥 User Directory</h1>
+        <div className="header-content">
+          <h1>🗳️ Poll App</h1>
+          <div className="user-info">
+            <span>👤 {user.name}</span>
+            {user.isGuest && <span className="guest-badge">Guest</span>}
+            <button onClick={logout} className="btn-logout">
+              Logout
+            </button>
+          </div>
+        </div>
       </header>
       
+      <GuestConvert />
+      
       <main>
-        <UserForm 
-          onSubmit={editingUser ? handleEdit : handleAdd}
-          initialData={editingUser || undefined}
-          onCancel={editingUser ? () => setEditingUser(null) : undefined}
-        />
+        <PollForm onSubmit={createPoll} />
         
-        <UserList 
-          users={users}
-          loading={loading}
-          error={error}
-          onDelete={handleDelete}
-          onEdit={setEditingUser}
-        />
+        <div className="polls-section">
+          <h2>Active Polls</h2>
+          {pollsLoading ? (
+            <div className="loading">Loading polls...</div>
+          ) : (
+            <PollDisplay 
+              polls={polls} 
+              onVote={vote}
+              onDelete={deletePoll}
+            />
+          )}
+        </div>
       </main>
     </div>
   )

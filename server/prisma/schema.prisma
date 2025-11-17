@@ -14,24 +14,52 @@ model User {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
+  password  String?  // Nullable for guest users
+  isGuest   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
+  
+  polls     Poll[]
+  votes     Vote[]
+  
   @@index([email])
 }
 
-// model User {
-//   "add" posts     Post[]
-// }
+model Poll {
+  id          Int          @id @default(autoincrement())
+  question    String
+  authorId    Int
+  author      User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  options     PollOption[]
+  votes       Vote[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  @@index([authorId])
+}
 
-// model Post {
-//   id        Int      @id @default(autoincrement())
-//   title     String
-//   content   String?
-//   userId    Int
-//   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-//
-//   @@index([userId])
-// }
+model PollOption {
+  id        Int      @id @default(autoincrement())
+  text      String
+  pollId    Int
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes     Vote[]
+  createdAt DateTime @default(now())
+  
+  @@index([pollId])
+}
+
+model Vote {
+  id        Int        @id @default(autoincrement())
+  userId    Int
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pollId    Int
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId  Int
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  
+  @@unique([userId, pollId]) // One vote per user per poll
+  @@index([pollId])
+  @@index([userId])
+}
